@@ -1,1 +1,1 @@
-resource "null_resource" "cluster0"{}
+resource "null_resource" "cluster1"{}
