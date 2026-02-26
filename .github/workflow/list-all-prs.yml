@@ -1,0 +1,41 @@
+name: PR Reminder
+
+on:
+  schedule:
+    - cron: "0 9 * * *"   # Runs daily at 09:00 UTC
+  workflow_dispatch:       # Allows manual trigger
+
+jobs:
+  comment-open-prs:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: List and comment on open PRs
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+
+            const { data: pulls } = await github.rest.pulls.list({
+              owner,
+              repo,
+              state: "open",
+              per_page: 100
+            });
+
+            for (const pr of pulls) {
+              const createdDate = new Date(pr.created_at).toISOString().split('T')[0];
+
+              const message = `PR is still not closed, since ${createdDate}`;
+
+              await github.rest.issues.createComment({
+                owner,
+                repo,
+                issue_number: pr.number,
+                body: message
+              });
+
+              console.log(`Commented on PR #${pr.number}`);
+            }
